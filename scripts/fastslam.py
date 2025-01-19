@@ -5,6 +5,7 @@ import numpy as np
 from nav_msgs.msg import OccupancyGrid, Odometry
 from geometry_msgs.msg import PoseArray, Pose
 from tf.transformations import quaternion_from_euler
+from scipy.linalg import inv
 
 class Particle:
     def __init__(self, x, y, theta, weight):
@@ -13,6 +14,7 @@ class Particle:
         self.theta = theta
         self.weight = weight
         self.landmarks = []  # List of detected landmarks for this particle
+        self.landmark_covariance = []  # Covariance matrix for each landmark
 
     def predict(self, odom):
         """
@@ -32,26 +34,40 @@ class Particle:
 
     def update_landmarks(self, observed_landmarks):
         """
-        Update landmarks using observed data
+        Update landmarks using observed data with EKF update.
         """
         for obs in observed_landmarks:
             obs_x = obs.position.x
             obs_y = obs.position.y
+            z = np.array([obs_x, obs_y])  # Observation (landmark position)
 
-            # If no landmarks exist, initialize
+            # For each particle, update the landmarks
+            for i, (mean_x, mean_y, variance) in enumerate(self.landmarks):
+                # Prediction: Predict the expected observation based on particle's position
+                predicted_z = np.array([mean_x - self.x, mean_y - self.y])
+                
+                # Compute the innovation (difference between observed and predicted landmark positions)
+                innovation = z - predicted_z
+
+                # Compute the Jacobian matrix (H) and the covariance of the observation (R)
+                H = np.array([[-1, 0], [0, -1]])  # Simple observation model (linear)
+                R = np.array([[0.1, 0], [0, 0.1]])  # Observation noise covariance
+                
+                # EKF: Compute the Kalman gain
+                S = np.dot(np.dot(H, self.landmark_covariance[i]), H.T) + R
+                K = np.dot(np.dot(self.landmark_covariance[i], H.T), inv(S))
+
+                # Update the state estimate
+                self.landmarks[i][0] += np.dot(K, innovation)[0]  # Update mean_x
+                self.landmarks[i][1] += np.dot(K, innovation)[1]  # Update mean_y
+
+                # Update the covariance
+                self.landmark_covariance[i] = np.dot(np.eye(2) - np.dot(K, H), self.landmark_covariance[i])
+
+            # If no landmarks exist, initialize with the observed ones
             if len(self.landmarks) < len(observed_landmarks):
-                self.landmarks.append([obs_x, obs_y, 0.5])  # Initialize with mean_x, mean_y, variance
-
-            # Update landmark position using observed data (Kalman-like update)
-            for i in range(len(self.landmarks)):
-                mean_x, mean_y, variance = self.landmarks[i]
-                dx = obs_x - mean_x
-                dy = obs_y - mean_y
-
-                # Update the mean and variance
-                self.landmarks[i][0] += 0.1 * dx  # Update mean_x
-                self.landmarks[i][1] += 0.1 * dy  # Update mean_y
-                self.landmarks[i][2] = max(0.1, variance * 0.9)  # Update variance
+                self.landmarks.append([obs_x, obs_y, 0.5])  # Initialize with observed x, y, and variance
+                self.landmark_covariance.append(np.eye(2))  # Initialize with identity matrix as covariance
 
 class FastSLAM:
     def __init__(self):
@@ -192,7 +208,6 @@ class FastSLAM:
 
         grid.data = data
         self.map_pub.publish(grid)
-
 
 if __name__ == "__main__":
     try:
