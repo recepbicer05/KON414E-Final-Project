@@ -5,7 +5,7 @@ This projected is developed to apply FastSlam Algorithm in ROS. There are severa
 
 ## IMU Based Odometry
 
-## aruco_detection.py
+## aruco_detectior.py
 
 ## aruco_random_spawn.py
 
