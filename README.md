@@ -9,6 +9,7 @@ The IMU based odomotery requested in the project was provided with the robot_loc
 
 ## aruco_detector.py
 This script is used to detect Aruco markers in real-time, estimate their poses, transform them into the desired coordinate frame (from camera to odometry), and publish the transformed poses as a PoseArray message. This can be used for various robotics applications requiring marker-based localization or tracking.
+Source of Aruco Marker which is used in this project: https://github.com/atom-robotics-lab/aruco_navigation/tree/main/models/aruco_marker1
 
 ## aruco_random_spawner.py
 This Python script is a ROS (Robot Operating System) node designed to spawn random Aruco markers in a Gazebo simulation environment. The markers are spawned at random positions within a specified range, and each marker's position and orientation are determined dynamically. The goal is to create a random distribution of Aruco markers in the Gazebo simulation environment for use in tasks like visual localization, mapping, or navigation.
