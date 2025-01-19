@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<!-- It should be added to Robot's urdf or xacro file-->
+
+<gazebo>
+  <plugin name="ground_truth_plugin" filename="libgazebo_ros_p3d.so">
+  <robotNamespace>ground_truth</robotNamespace>
+  <bodyName>base_link</bodyName>
+  <updateRate>30</updateRate>
+  <topicName>/ground_truth/state</topicName>
+  <gaussianNoise>0.0</gaussianNoise>
+</plugin>
